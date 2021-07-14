@@ -9,28 +9,15 @@ import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { messages } from '../../helpers/calendar-messages-es';
 import { CalendarEvent } from './CalendarEvent';
 import { CalendarModal } from './CalendarModal';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { uiOpenModal } from '../../actions/ui';
-import { eventSetActive } from '../../actions/events';
+import { eventClearActiveEvent, eventSetActive } from '../../actions/events';
 import { AddNewFab } from '../ui/AddNewFab';
+import { DeletedEventfab } from '../ui/DeletedEventFab';
 
 moment.locale('es');
 
 const localizer = momentLocalizer(moment); 
-
-const events = [{
-    title: 'Cumpleaños del jefe',
-    start: moment().toDate(),
-    end: moment().add(2, 'hours').toDate(),
-    bgcolor: '#fafafa ',
-    notes: 'Comprar el pastel',
-    user: {
-        _id: '1',
-        name: 'Leonardo'
-    }
-}]
-
-
 
 export const CalendarScreen = () => {
 
@@ -38,6 +25,9 @@ export const CalendarScreen = () => {
     const dispatch = useDispatch();
     // uso del useState para leer la informacion del localstorage
     const [lastView, setLastView] = useState( localStorage.getItem('lastView') || 'month' );
+
+    // Leemos la informacion del los events del store
+    const {events, activeEvent} = useSelector( state => state.calendar );
 
     //Creacion de los eventos del calendario
 
@@ -47,8 +37,7 @@ export const CalendarScreen = () => {
     }
 
     const onSelectedEvent = (e) => {
-        dispatch(eventSetActive())
-        dispatch(uiOpenModal())
+        dispatch(eventSetActive(e))
     }
 
     const onViewChange = (e) => {
@@ -56,8 +45,11 @@ export const CalendarScreen = () => {
         localStorage.setItem('lastView', e);
     }
 
+    const onSelectSlot = (e) => {
+        dispatch(eventClearActiveEvent())
+    }
+
     const eventStyleGetter = ( event, start, end, isSelected ) => {
-        console.log(event, start, end, isSelected);
 
         const style = {
             backgroundColor: '#367CF7',
@@ -86,6 +78,8 @@ export const CalendarScreen = () => {
                 onDoubleClickEvent={onDoubleClick}
                 onSelectEvent={onSelectedEvent}
                 onView={onViewChange}
+                onSelectSlot={onSelectSlot}
+                selectable={true}
                 view={lastView}
                 components={{
                     event: CalendarEvent
@@ -93,6 +87,10 @@ export const CalendarScreen = () => {
             />
 
             <AddNewFab />
+
+            {
+                (activeEvent) && <DeletedEventfab />
+            }
 
             <CalendarModal />
         </div>
